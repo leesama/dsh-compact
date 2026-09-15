@@ -12,8 +12,8 @@ test("published tarball installs and imports in a fresh Node process", () => {
 	const root = mkdtempSync(join(tmpdir(), "dsh-compact-package-"));
 	try {
 		const npmrc = join(root, "npmrc");
-		writeFileSync(npmrc, "");
-		const env = { ...process.env, NPM_CONFIG_USERCONFIG: npmrc };
+		writeFileSync(npmrc, "registry=https://registry.npmjs.org/\n");
+		const env = { ...process.env, NPM_CONFIG_USERCONFIG: npmrc, NPM_CONFIG_CACHE: join(root, "cache") };
 		delete env.NPM_TOKEN;
 		delete env.NODE_AUTH_TOKEN;
 		const packed = JSON.parse(execFileSync("npm", [
@@ -22,7 +22,7 @@ test("published tarball installs and imports in a fresh Node process", () => {
 		assert(packed.files.some((entry) => entry.path === "lib/index.js"));
 		assert(!packed.files.some((entry) => /^(test|e2e|node_modules)\//.test(entry.path)));
 		execFileSync("npm", [
-			"install", "--prefix", root, "--offline", "--ignore-scripts", "--no-audit",
+			"install", "--prefix", root, "--prefer-offline", "--ignore-scripts", "--no-audit",
 			"--no-fund", "--package-lock=false", join(root, packed.filename),
 		], { env, encoding: "utf8", stdio: "pipe" });
 		const pkg = JSON.parse(readFileSync(join(project, "package.json"), "utf8"));
