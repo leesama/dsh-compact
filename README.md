@@ -40,7 +40,7 @@ dsh plugin --profile <name> add github:leesama/dsh-compact
   name: dsh-compact
   config:
     reportRows: 10     # rows in the /compact-stats table
-    persist: true      # persist records across restarts via the injected store
+    persist: true      # use an explicitly injected store; default mounting is in-memory
 ```
 
 ## How it works
@@ -55,7 +55,9 @@ commands
   └─ /compact-stats      → table + cumulative totals
 ```
 
-The fold logic (`src/engine.ts`) is a pure reducer — tolerant of crash-recovery orderings (summary without start, bare failed end) — with full unit coverage. The e2e suite drives `apply()` against a mock session firehose, verifying the full lifecycle amid unrelated events, persistence round-trips, and resume from a persisted store. Persistence goes through a minimal injectable `CompactionStore` contract; the Cordis layer adapts it to `ctx.storageDomain` (JSON or SQLite backend) without touching the accounting logic.
+The fold logic (`src/engine.ts`) is a pure reducer, tolerant of crash-recovery orderings (summary without start, bare failed end). The suite named `test:e2e` drives `apply()` against a mock session firehose; these are simulated integration tests, not a real DSH process test. Its persistence round-trips use an in-memory test store. A custom host can pass a `CompactionStore` explicitly; normal plugin mounting uses a no-op store, and a `storageDomain` adapter is not implemented.
+
+`test:package` separately builds the release, packs and installs the tarball into a temporary directory, and imports its entry in a fresh Node process. This verifies the published module layout, not full DSH behavior.
 
 ## Development
 
@@ -64,6 +66,7 @@ npm install
 npm run typecheck   # tsc --noEmit (strict)
 npm test            # unit + e2e
 npm run test:coverage
+npm run test:package # pack, install and load the built module
 npm run build       # tsc → lib/
 ```
 

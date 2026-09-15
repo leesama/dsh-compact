@@ -29,10 +29,12 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
     "test:e2e": "vitest run e2e",
+    "test:package": "npm run build && node --test test/package.test.mjs",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
